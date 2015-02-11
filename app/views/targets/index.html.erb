@@ -1,0 +1,6 @@
+<div class="row">
+  <div class="col-xs-6">
+    <h3>Reachable Targets</h3>
+    <%= pie_chart Target.all.group(:is_reachable).count %>
+  </div>
+</div>
