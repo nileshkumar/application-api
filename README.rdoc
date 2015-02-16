@@ -1,0 +1,129 @@
+== README
+
+This application requires:
+
+Ruby 2.1.5
+Rails 4.1.8
+Database Sqlite3
+
+To crate the database, run the command:
+bundle exec rake db:crate
+
+To run the seed file, run the command:
+bundle exec rake db:seed
+
+To run the migration, run the command:
+bundle exec rake db:migrate
+
+To install all the gems, run the command:
+bundle install
+
+To run the application, run the command:
+rails servers
+
+To deploy the application, we need Git and Capistrano to be configured.
+
+We need to configure name and email id for the Git, as below:
+git config --global user.name "Your name"
+git config --global user.email "your_email@example.com"
+
+Then run the following command to push the code to Git:
+cd /your/project/folder
+git init
+git add .
+git commit -m 'first commit'
+git remote add origin git@github.com:username/your-repo-name.git
+git push origin master
+
+Prepare Server environment:
+
+sudo groupadd deployers
+
+sudo usermod -a -G deployers user_name
+
+sudo chown -R user_name:deployers /deploy/to/path
+sudo chmod -R g+w /deploy/to/path
+
+Capify the deployment:
+
+To add the gem in the Gemfile:
+group :development do
+    gem 'capistrano'
+end
+To install that gem, run:
+bundle install
+
+Then run the following commands:
+cd /path/to/your/project
+capify .
+
+It will create /config/deploy.rb file. Add following lines:
+
+set :application, "YourApplicationName"
+set :repository, "git@github.com:your-username/your-repository-name.git"
+set :deploy_to, "/path/to/your/app"
+set :scm, :git
+set :branch, "master"
+set :user, "user_name"
+set :scm_passphrase, "password"
+set :use_sudo, false
+set :rails_env, "production"
+set :deploy_via, :copy
+set :ssh_options, { :forward_agent => true, :port => 4321 }
+set :keep_releases, 5
+default_run_options[:pty] = true
+server "www.example.com", :app, :web, :db, :primary => true
+role :web, "web.example.com"
+role :app, "app.example.com"
+role :db, "db.somethingelse.com", :primary => true
+
+
+Run the command to set up:
+cap deploy:setup
+
+This will create following directories:
+/var/www/example.com/current
+/var/www/example.com/shared
+/var/www/example.com/releases
+
+
+First, make a new config directory in the shared directory that Capistrano created.
+ssh user_name@example.com -p 4321
+mkdir /var/www/example.com/shared/config
+
+We need to specify the port number with a capital P when using the scp command.
+scp -P 4321 ./config/database.yml  user_name@example.com:/var/www/example.com/shared/config/database.yml
+
+
+The format of the tasks in deploy.rb file looks like this:
+
+namespace :deploy do
+    desc "Human readable description of task"
+    task :name_of_task_command do
+        # do stuff
+    end
+end
+
+desc "Symlink shared config files"
+task :symlink_config_files do
+    run "#{ try_sudo } ln -s #{ deploy_to }/shared/config/database.yml #{ current_path }/config/database.yml"
+end
+
+desc "Restart Passenger app"
+task :restart do
+    run "#{ try_sudo } touch #{ File.join(current_path, 'tmp', 'restart.txt') }"
+end
+
+So when deployment tasks are ready, we can run:
+cap deploy
+
+To run migration, run:
+cap deploy:migrate
+
+
+
+
+
+
+
+
